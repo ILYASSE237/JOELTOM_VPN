@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 command -v bash >/dev/null || { echo -e "${RED}❌ Bash est requis.${NC}"; exit 1; }
 chmod +x "$ROOT_DIR/joeltom.sh" "$ROOT_DIR/menu/"*.sh 2>/dev/null || true
 export JOELTOM_NO_REBOOT=1
-export SERVER_HOST="${SERVER_HOST:-https://raw.githubusercontent.com/joeltom-tech/JOELTOM_VPN/main}"
+export SERVER_HOST="${SERVER_HOST:-https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main}"
 export TIMEZONE="${TIMEZONE:-Africa/Douala}"
 echo -e "${CYAN}╔══════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║${NC}       🚀 ${GREEN}JOELTOM_VPN — INSTALLATEUR${NC}       ${CYAN}║${NC}"
