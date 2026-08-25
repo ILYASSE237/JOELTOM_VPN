@@ -22,7 +22,7 @@ export GR="${GREEN}"
 export RD="${RED}"
 
 # ─── Configuration ────────────────────────────────────────────
-readonly SERVER_HOST="https://raw.githubusercontent.com/joeltom-tech/JOELTOM_VPN/main"
+readonly SERVER_HOST="https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main"
 readonly JOELTOM_VERSION="2.1.0"
 readonly TIMEZONE="${TIMEZONE:-Africa/Douala}"
 export MYIP=$(wget -qO- ipv4.icanhazip.com 2>/dev/null || curl -s4 https://ipv4.icanhazip.com)
