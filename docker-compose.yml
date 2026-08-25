@@ -1,0 +1,122 @@
+version: '3.9'
+
+# ════════════════════════════════════════════════════════════════
+#  JOELTOM VPN — Docker Compose
+#  BUG FIX: volume joeltom-db maintenant monté sur /etc/joeltom-web
+#  pour correspondre à JOELTOM_DB_DIR dans db.ts / backupCron.ts
+# ════════════════════════════════════════════════════════════════
+
+services:
+  # ─── Panneau Web ──────────────────────────────────────────────
+  joeltom-web:
+    build:
+      context: ./nexus-web
+      dockerfile: ../Dockerfile.web
+    container_name: joeltom-web
+    restart: unless-stopped
+    ports:
+      - "2087:2087"
+    volumes:
+      # BUG FIX: chemin standardisé /etc/joeltom-web (cohérent avec db.ts)
+      - joeltom-db:/etc/joeltom-web
+      - joeltom-backups:/tmp/joeltom_backups
+    environment:
+      # BUG FIX: variable standardisée JOELTOM_DB_DIR
+      - JOELTOM_DB_DIR=/etc/joeltom-web
+      - NEXUS_ADMIN_USER=${ADMIN_USER:?Set ADMIN_USER in .env}
+      - NEXUS_ADMIN_PASS=${ADMIN_PASS:?Set ADMIN_PASS in .env}
+      - NEXUS_JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - JOELTOM_JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ADMIN_CHAT=${TELEGRAM_ADMIN_CHAT:-}
+      - CAMPAY_APP_USERNAME=${CAMPAY_APP_USERNAME:-}
+      - CAMPAY_APP_PASSWORD=${CAMPAY_APP_PASSWORD:-}
+      - BACKUP_S3_BUCKET=${BACKUP_S3_BUCKET:-}
+      - BACKUP_S3_ENDPOINT=${BACKUP_S3_ENDPOINT:-}
+      - BACKUP_S3_ACCESS_KEY=${BACKUP_S3_ACCESS_KEY:-}
+      - BACKUP_S3_SECRET_KEY=${BACKUP_S3_SECRET_KEY:-}
+      - BACKUP_S3_REGION=${BACKUP_S3_REGION:-us-east-1}
+    networks:
+      - joeltom-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2087/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ─── Bot Telegram Principal ───────────────────────────────────
+  joeltom-core-bot:
+    build:
+      context: ./joeltom_core_bot
+      dockerfile: ../Dockerfile.bot
+    container_name: joeltom-core-bot
+    restart: unless-stopped
+    volumes:
+      - /etc/joeltom_bot:/etc/joeltom_bot:ro
+      - /etc/xray:/etc/xray
+      - /usr/local/etc/xray:/usr/local/etc/xray
+    environment:
+      - JOELTOM_BOT_CONFIG=/etc/joeltom_bot/config.json
+    networks:
+      - joeltom-net
+    depends_on:
+      joeltom-web:
+        condition: service_started
+
+  # ─── Bot Deploy Multi-VPS ──────────────────────────────────────
+  joeltom-deploy-bot:
+    build:
+      context: ./joeltom_deploy_bot
+      dockerfile: ../Dockerfile.bot
+    container_name: joeltom-deploy-bot
+    restart: unless-stopped
+    volumes:
+      - /etc/joeltom_deploy_bot:/etc/joeltom_deploy_bot:ro
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - JOELTOM_DEPLOY_CONFIG=/etc/joeltom_deploy_bot/config.json
+    networks:
+      - joeltom-net
+
+  # ─── Bot WhatsApp ─────────────────────────────────────────────
+  joeltom-whatsapp-bot:
+    build:
+      context: ./joeltom_whatsapp_bot
+      dockerfile: ../Dockerfile.bot
+    container_name: joeltom-whatsapp-bot
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      - /etc/joeltom_whatsapp_bot:/etc/joeltom_whatsapp_bot:ro
+    environment:
+      - JOELTOM_WA_CONFIG=/etc/joeltom_whatsapp_bot/config.json
+    networks:
+      - joeltom-net
+
+  # ─── Nginx Reverse Proxy ──────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: joeltom-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - nginx-logs:/var/log/nginx
+    networks:
+      - joeltom-net
+    depends_on:
+      - joeltom-web
+
+volumes:
+  joeltom-db:
+  joeltom-backups:
+  nginx-logs:
+
+networks:
+  joeltom-net:
+    driver: bridge
