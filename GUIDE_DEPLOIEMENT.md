@@ -23,7 +23,7 @@
 
 ```bash
 # Sur votre VPS (en root)
-wget -qO /tmp/autoinstall.sh https://raw.githubusercontent.com/joeltom-tech/JOELTOM_VPN/main/autoinstall.sh
+wget -qO /tmp/autoinstall.sh https://raw.githubusercontent.com/ILYASSE237-tech/JOELTOM_VPN/main/autoinstall.sh
 bash /tmp/autoinstall.sh
 ```
 
@@ -35,7 +35,7 @@ Cette commande télécharge et exécute automatiquement `joeltom.sh` qui install
 
 ```bash
 # 1. Télécharger l'archive
-git clone https://github.com/joeltom-tech/JOELTOM_VPN.git
+git clone https://github.com/ILYASSE237/JOELTOM_VPN.git
 cd JOELTOM_VPN
 
 # 2. Lancer l'installateur
@@ -56,7 +56,7 @@ Si tu veux un déploiement propre sur un VPS Ubuntu, utilise le script et le ser
 ```bash
 # 1. Cloner le dépôt
 sudo apt update && sudo apt install -y git curl
-git clone https://github.com/joeltom-tech/JOELTOM_VPN.git
+git clone https://github.com/ILYASSE237/JOELTOM_VPN.git
 cd JOELTOM_VPN
 
 # 2. Installer le panneau web et le service systemd
@@ -113,7 +113,7 @@ curl http://127.0.0.1:2087/health
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/joeltom-tech/JOELTOM_VPN.git
+git clone https://github.com/ILYASSE237/JOELTOM_VPN.git
 cd JOELTOM_VPN
 
 # 2. Configurer l'environnement
@@ -208,7 +208,7 @@ CAMPAY_REDIRECT_URL=https://VOTRE_DOMAINE.COM/payment/success
 {
   "bot_token": "VOTRE_TOKEN_TELEGRAM_BOT_DEPLOY",
   "admin_ids": [VOTRE_TELEGRAM_USER_ID],
-  "install_url": "https://raw.githubusercontent.com/joeltom-tech/JOELTOM_VPN/main/autoinstall.sh",
+  "install_url": "https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main/autoinstall.sh",
   "vps_presets": {
     "mon-vps-1": {
       "host": "IP_DE_VOTRE_VPS",
@@ -284,5 +284,5 @@ sqlite3 /etc/joeltom-web/joeltom.db "SELECT * FROM admins;"
 
 ## 🆘 Support
 
-- **Telegram** : @abess237
-- **GitHub Issues** : https://github.com/joeltom-tech/JOELTOM_VPN/issues
+- **Telegram** : @ILYASSE237
+- **GitHub Issues** : https://github.com/ILYASSE237/JOELTOM_VPN/issues
