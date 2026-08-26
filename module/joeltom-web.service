@@ -1,0 +1,20 @@
+[Unit]
+Description=JOELTOM VPN Web Panel
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/joeltom-web
+Environment=NODE_ENV=production
+Environment=PORT=2087
+Environment=JOELTOM_DB_DIR=/etc/joeltom-web
+EnvironmentFile=-/etc/joeltom-web/joeltom.env
+ExecStart=/usr/bin/node /opt/joeltom-web/dist/server/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

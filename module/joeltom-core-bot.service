@@ -1,0 +1,15 @@
+[Unit]
+Description=JOELTOM VPN — Core Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/joeltom_bot
+ExecStart=/usr/bin/python3 /etc/joeltom_bot/joeltom_bot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
