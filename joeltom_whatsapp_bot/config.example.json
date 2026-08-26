@@ -1,0 +1,12 @@
+{
+  "twilio_account_sid": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "twilio_auth_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "twilio_whatsapp_number": "whatsapp:+14155238886",
+  "admin_whatsapp_number": "+237654145540",
+  "reseller_numbers": [
+    "+237622476798",
+    "+237622474429
+  ],
+  "bot_password": "CHANGE_ME_TO_A_STRONG_PASSWORD",
+  "port": 5001
+}
