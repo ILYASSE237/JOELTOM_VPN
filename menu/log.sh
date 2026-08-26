@@ -1,7 +1,6 @@
 clear
 set -euo pipefail
-IFS=$'
-	'
+IFS=$'\n\t'
 export LN='\033[34m'
 export BG='\033[44m'
 export NC='\033[0m'

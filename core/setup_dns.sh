@@ -48,7 +48,7 @@ echo
 while true; do
 read -rp "  NS Domain : " -e Nameserver
 if [[ -z "$Nameserver" ]]; then
-echo -e "${RED}NS Domain cannot be empty. Please enter a value.${NC}"
+echo -e "${RD}NS Domain cannot be empty. Please enter a value.${NC}"
 else
 break
 fi
