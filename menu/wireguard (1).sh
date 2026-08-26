@@ -1,24 +1,18 @@
 #!/bin/bash
-# ============================================================
-#   JOELTOM VPN — Menu WireGuard
-#   Délègue la gestion des clients au script communautaire
-#   angristan/wireguard-install (installé par core/wireguard.sh),
-#   dont le menu interactif gère déjà add/list/revoke proprement.
-# ============================================================
-RED='\033[0;31m'; BLUE='\033[0;34m'; GREEN='\033[0;32m'; NC='\033[0m'
-SERVER_HOST="${SERVER_HOST:-https://raw.githubusercontent.com/joeltom-tech/JOELTOM_VPN/main}"
-TOOL="/etc/joeltom/tools/wireguard-install.sh"
+# Deprecated wrapper for backward compatibility.
+# Previously the file name contained spaces/parentheses; this wrapper
+# forwards calls to the normalized menu/wireguard.sh.
 
-if [ ! -f "$TOOL" ] || ! command -v wg >/dev/null 2>&1; then
-  echo -e "${RED}WireGuard n'est pas installé. Installation en cours...${NC}"
-  curl -fsSL "${SERVER_HOST}/core/wireguard.sh" -o /tmp/wireguard_install.sh
-  bash /tmp/wireguard_install.sh
+NEW_SCRIPT="$(dirname "$0")/wireguard.sh"
+if [ -x "$NEW_SCRIPT" ]; then
+  exec "$NEW_SCRIPT" "$@"
 fi
 
-echo -e "${GREEN}Ouverture du gestionnaire WireGuard (ajouter/lister/révoquer un client)...${NC}"
-sleep 1
-bash "$TOOL"
-echo ""
-read -n 1 -s -r -p " Appuyez sur une touche pour revenir au menu JOELTOM..."
-clear
-menu
+# Fallback: try calling the new path directly if script not in same dir
+if [ -x "/usr/local/bin/menu/wireguard.sh" ]; then
+  exec "/usr/local/bin/menu/wireguard.sh" "$@"
+fi
+
+# If not found, print an informative message
+echo "Le script menu/wireguard.sh est introuvable. Veuillez vérifier l'installation."
+exit 1
