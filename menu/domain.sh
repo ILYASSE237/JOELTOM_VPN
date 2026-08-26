@@ -1,0 +1,178 @@
+resolve_script_dir() {
+  local source="${BASH_SOURCE[0]}"
+  local dir=""
+  while [ -L "$source" ]; do
+    dir="$(cd -P "$(dirname "$source")" && pwd 2>/dev/null || pwd)"
+    source="$(readlink "$source")"
+    [[ "$source" != /* ]] && source="$dir/$source"
+  done
+  dir="$(cd -P "$(dirname "$source")" && pwd 2>/dev/null || dirname "$source")"
+  printf '%s\n' "$dir"
+}
+
+SCRIPT_DIR="$(resolve_script_dir)"
+if [ -f "$SCRIPT_DIR/ui.sh" ]; then
+  source "$SCRIPT_DIR/ui.sh"
+elif [ -f "/usr/local/sbin/ui.sh" ]; then
+  SCRIPT_DIR="/usr/local/sbin"
+  source "$SCRIPT_DIR/ui.sh"
+else
+  echo "Erreur : ui.sh introuvable" >&2
+  exit 1
+fi
+
+menu() {
+  exec bash "$SCRIPT_DIR/menu.sh"
+}
+
+clear
+export LN='\033[34m'
+export BG='\033[44m'
+export NC='\033[0m'
+export GR='\033[32m'
+export RD='\033[31m'
+export DOMAIN=$(cat /etc/xray/domain)
+export MYIP=$(wget -qO- ipv4.icanhazip.com)
+function add_domain() {
+clear
+menu_header "DOMAIN PANEL" "Ajouter ou modifier un domaine"
+echo -e "${MENU_CYAN}╭──────────────────────────────────────────────────╮${MENU_NC}"
+echo
+while true; do
+read -rp " Hostname / Domain: " host
+if [[ -z "$host" ]]; then
+echo -e " ${RD}Domain cannot be empty. Please try again.${NC}"
+continue
+fi
+domain_ip=$(getent ahosts "$host" | awk '{print $1; exit}')
+if [[ "$domain_ip" == "$MYIP" ]]; then
+break
+else
+clear
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} ${BG}                 DOMAIN PANEL                   ${NC} ${LN}┃${NC}"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} ${RD}✘ Domain does not point to this VPS!${NC}"
+echo -e "${LN}┃${NC} ${RD}Domain resolves to: $domain_ip ${NC}"
+echo -e "${LN}┃${NC} ${RD}VPS public IP is : $MYIP ${NC}"
+echo -e "${LN}┃${NC} ${RD}Please fix your DNS settings and try again.${NC}"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●${NC}"
+echo ""
+read -n 1 -s -r -p " Press any key to return to the menu..."
+domain
+return
+fi
+done
+echo "$host" > /root/domain
+echo "$host" > /etc/xray/domain
+if [[ -f /root/domain ]]; then
+domain=$(cat /root/domain)
+elif [[ -f /etc/xray/domain ]]; then
+domain=$(cat /etc/xray/domain)
+else
+echo -e "${LN}┃${NC} Domain file not found!"
+exit 1
+fi
+clear
+menu_header "DOMAIN PANEL" "Domaine enregistré"
+echo -e "${MENU_CYAN}╭──────────────────────────────────────────────────╮${MENU_NC}"
+echo -e "${MENU_CYAN}│${NC} Domaine : ${domain}"
+echo -e "${MENU_CYAN}│${NC} ${MENU_GREEN}[01]${NC} Changer de domaine   ${MENU_GREEN}[02]${NC} Renouveler le certificat"
+echo -e "${MENU_CYAN}│${NC} ${MENU_RED}[00]${NC} Retour au menu principal"
+echo -e "${MENU_CYAN}╰──────────────────────────────────────────────────╯${MENU_NC}"
+echo ""
+read -p "  Choix : " opt
+echo ""
+case $opt in
+1 | 01) clear ; add_domain ;;
+2 | 02) clear ; renew_cert ;;
+0 | 00) clear ; menu ;;
+*)
+echo -e "${RD} [ERROR] Invalid selection!${NC}"
+sleep 1
+domain
+;;
+esac
+}
+function renew_cert() {
+clear
+if [[ -f /root/domain ]]; then
+domain=$(cat /root/domain)
+elif [[ -f /etc/xray/domain ]]; then
+domain=$(cat /etc/xray/domain)
+else
+echo -e "${LN}┃${NC} Domain file not found!"
+exit 1
+fi
+systemctl stop nginx &> /dev/null
+systemctl stop xray &> /dev/null
+Cek=$(lsof -i:80 | awk 'NR==2 {print $1}')
+sleep 1
+systemctl stop $Cek &> /dev/null
+mkdir -p /usr/bin/xray
+mkdir -p /etc/xray
+mkdir -p /usr/local/etc/xray
+if [ ! -f "/root/.acme.sh/acme.sh" ]; then
+echo -e "${LN}┃${NC} acme.sh not found, downloading...${NC}"
+curl https://get.acme.sh | sh
+else
+echo -e "${LN}┃${NC} acme.sh found, skipping installation.${NC}"
+fi
+alias acme.sh=~/.acme.sh/acme.sh
+/root/.acme.sh/acme.sh --upgrade --auto-upgrade
+/root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+/root/.acme.sh/acme.sh --issue -d "${domain}" --standalone --keylength ec-256
+/root/.acme.sh/acme.sh --install-cert -d "${domain}" --ecc \
+--fullchain-file /etc/xray/xray.crt \
+--key-file /etc/xray/xray.key
+chown -R nobody:nogroup /etc/xray
+chmod 644 /etc/xray/xray.crt
+chmod 644 /etc/xray/xray.key
+systemctl start nginx &> /dev/null
+systemctl start xray &> /dev/null
+systemctl start $Cek &> /dev/null
+clear
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} ${BG}                 DOMAIN PANEL                   ${NC} ${LN}┃${NC}"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} SSL Certificate has been issued successfully!"
+echo -e "${LN}┃${NC} Domain       : ${domain}"
+echo -e "${LN}┃${NC} Cert File    : /etc/xray/xray.crt"
+echo -e "${LN}┃${NC} Key File     : /etc/xray/xray.key"
+echo -e "${LN}┃${NC}                                                            "
+echo -e "${LN}┃${NC} AutoScript Xray by 🜲 DOTYWRT V1.0"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●${NC}"
+echo ""
+read -n 1 -s -r -p " Press any key to return to the menu..."
+domain
+}
+function domain() {
+clear
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} ${BG}                 DOMAIN PANEL                   ${NC} ${LN}┃${NC}"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${LN}┃${NC} [01] • Change Domain   [02] • Renew Certificate"
+echo -e "${LN}┃${NC} "
+echo -e "${LN}┃${NC} [00] • Back to Main Menu"
+echo -e "${LN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e "${LN}●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●${NC}"
+echo ""
+read -p "  Select an option : " opt
+echo ""
+case $opt in
+1 | 01) clear ; add_domain ;;
+2 | 02) clear ; renew_cert ;;
+0 | 00) clear ; menu ;;
+*)
+echo -e "${RD} [ERROR] Invalid selection!${NC}"
+sleep 1
+domain
+;;
+esac
+}
+domain
