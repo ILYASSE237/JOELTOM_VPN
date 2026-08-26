@@ -31,3 +31,12 @@ logs/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Ignore embedded/binary module files
+module/ohp
+module/newudpgw
+module/udp-custom-linux-amd64
+module/hosts
+module/hosts.txt
+module/*.exe
+module/*-linux-*
