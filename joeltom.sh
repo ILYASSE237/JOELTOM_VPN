@@ -25,7 +25,19 @@ export RD="${RED}"
 readonly SERVER_HOST="https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main"
 readonly JOELTOM_VERSION="2.1.0"
 readonly TIMEZONE="${TIMEZONE:-Africa/Douala}"
-export MYIP=$(wget -qO- ipv4.icanhazip.com 2>/dev/null || curl -s4 https://ipv4.icanhazip.com)
+
+# Récupération sécurisée de l'IP avec timeout et validation
+get_myip() {
+    local ip
+    ip=$(timeout 8 wget -qO- ipv4.icanhazip.com 2>/dev/null || timeout 8 curl -s4 https://ipv4.icanhazip.com)
+    if [[ -z "$ip" ]]; then
+        log_error "Impossible de récupérer l'adresse IP du VPS. Vérifiez votre connexion Internet."
+        exit 1
+    fi
+    echo "$ip"
+}
+export MYIP
+MYIP=$(get_myip)
 
 # ─── Helpers ──────────────────────────────────────────────────
 TIMESTAMP() { date '+%Y-%m-%d %H:%M:%S'; }
@@ -50,7 +62,8 @@ progress_bar() {
 show_banner() {
     clear
     echo -e "${BLUE}"
-    cat << 'BANNER'     ██╗ ██████╗ ███████╗██╗  ████████╗ ██████╗ ███╗   ███╗
+    cat << 'BANNER'
+     ██╗ ██████╗ ███████╗██╗  ████████╗ ██████╗ ███╗   ███╗
      ██║██╔═══██╗██╔════╝██║  ╚══██╔══╝██╔═══██╗████╗ ████║
      ██║██║   ██║█████╗  ██║     ██║   ██║   ██║██╔████╔██║
 ██   ██║██║   ██║██╔══╝  ██║     ██║   ██║   ██║██║╚██╔╝██║
@@ -210,19 +223,16 @@ show_tns() {
         add_domain
         ;;
     2 | 02)
-        log_warn "Conditions refusées. Suppression des scripts et sortie..."
-        rm -f /root/*.sh
-        sleep 5
+        log_warn "Conditions refusées. Sortie..."
+        sleep 2
         exit 0
         ;;
     *)
-        log_error "Choix invalide!"
-        rm -f /root/*.sh
-        sleep 5
-        exit 0
+        log_error "Choix invalide. Veuillez réessayer."
+        sleep 2
+        show_tns
         ;;
     esac
-
 }
 
 add_domain() {
@@ -295,7 +305,7 @@ run_scripts() {
 install_menu() {
     log_step "Installation des scripts de menu..."
     mkdir -p "/usr/local/sbin"
-    local menus=(dns zivpn expiry domain iptools menu socks ssh status trojan vless vmess vmess_new vlesstls netguard openvpn shadowsocks hysteria2 speedtest tuic wireguard port log tgbot uninstall update web fastdns)
+    local menus=(dns zivpn expiry domain iptools menu socks ssh status trojan vless vmess vmess_new vlesstls netguard openvpn shadowsocks hysteria2 speedtest tuic wireguard port log tgbot uninstall)
     local failed=0
 
     for script in "${menus[@]}"; do
