@@ -1,11 +1,37 @@
 #!/bin/bash
-set -euo pipefail
-export DEBIAN_FRONTEND=noninteractive
-REPO_RAW="${REPO_RAW:-https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main}"
-RED='\033[0;31m'; GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
-[ "$EUID" -eq 0 ] || { echo -e "${RED}❌ Exécutez ce script en root.${NC}"; exit 1; }
-command -v curl >/dev/null 2>&1 || { apt-get update -y && apt-get install -y curl ca-certificates; }
-echo -e "${BLUE}🚀 JOELTOM_VPN — installation distante${NC}"
-curl -fsSL "$REPO_RAW/install.sh" -o /tmp/joeltom-install.sh
-chmod +x /tmp/joeltom-install.sh
-exec bash /tmp/joeltom-install.sh
+clear
+echo -e "\e[36m====================================================\e[0m"
+echo -e "\e[36m    DÉMARRAGE DE L'INSTALLATION: JOELTOM VPN  \e[0m"
+echo -e "\e[36m====================================================\e[0m"
+
+# 1. Préparation des outils vitaux
+apt-get update -y >/dev/null 2>&1
+apt-get install -y wget curl >/dev/null 2>&1
+
+# 2. Correction réseau (Forçage IPv4 pour la stabilité)
+echo "[+] Optimisation des routes réseau..."
+echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
+sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1 >/dev/null 2>&1
+
+# 3. Téléchargement du Lanceur Principal depuis JOELTOM VPN
+SERVER_HOST="https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main"
+echo "[+] Connexion au dépôt autonome JOELTOM..."
+wget -qO /root/joeltom.sh "$SERVER_HOST/joeltom"
+
+# 4. Exécution Sécurisée
+if [ -f /root/joeltom.sh ]; then
+    echo "[+] Fichier noyau intercepté avec succès. Lancement..."
+    chmod +x /root/joeltom.sh
+    # Toujours lire les choix interactifs depuis le terminal réel.
+    # Cela évite le EOF lorsque autoinstall.sh est lancé avec:
+    # curl ... | sudo bash
+    if [ -r /dev/tty ]; then
+        exec bash /root/joeltom.sh </dev/tty
+    else
+        exec bash /root/joeltom.sh
+    fi
+else
+    echo "[-] ERREUR FATALE: Impossible d'atteindre le dépôt GitHub."
+    exit 1
+fi
