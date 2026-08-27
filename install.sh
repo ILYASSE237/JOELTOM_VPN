@@ -20,7 +20,7 @@ if [ "${JOELTOM_INSTALL_WEB:-1}" = "1" ] && [ -d "$ROOT_DIR/nexus-web" ]; then
   bash "$ROOT_DIR/install_web_panel_vps.sh"
 fi
 echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║       ✅ INSTALLATION TERMINÉE — JOELTOM_VPN        ║${NC}"
+echo -e "${GREEN}║       ✅ INSTALLATION TERMINÉE — JOELTOM_VPN        ${NC}║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}"
 echo "Menu: /usr/local/bin/menu"
 echo "Version: $(cat /etc/joeltom/version 2>/dev/null || echo 2.1.0)"
