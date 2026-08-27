@@ -25,5 +25,5 @@ curl -fsSL https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main/autoins
 Alternative :
 
 ```bash
-wget -qO /tmp/katashie-install.sh https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main/autoinstall.sh && sudo bash /tmp/katashie-install.sh
+wget -qO /tmp/katashie-install.sh https://raw.githubusercontent.com/ILYASSE237/JOELTOM_VPN/main/autoinstall.sh && sudo bash /tmp/joeltom-install.sh
 ```
